@@ -13,7 +13,7 @@ app.add_middleware(
     allow_headers=["*"],  # Permitir todos los encabezados
 )
 
-@app.get("/appointment/{appointment_id}", response_model=dict)
+@app.get("/appointments/{appointments_id}", response_model=dict)
 async def get_appointment_by_id(appointment_id: str):
     status, appointment = GetAppointmentById(appointment_id)
     if status == 'success':
