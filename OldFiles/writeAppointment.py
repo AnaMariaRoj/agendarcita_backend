@@ -1,64 +1,45 @@
+import json
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
+from bson import ObjectId
 
+# Función para conectar a la base de datos MongoDB
 def connect_to_mongodb(uri, db_name, collection_name):
-    try:
-        client = MongoClient(uri, server_api=ServerApi('1'))
-        db = client[db_name]
-        collection = db[collection_name]
-        print("✅ Conectado a MongoDB correctamente")
-        return collection
-    except Exception as e:
-        print(f"❌ Error conectando a MongoDB: {e}")
-        return None
+    client = MongoClient(uri, server_api=ServerApi('1'))
+    db = client[db_name]
+    collection = db[collection_name]
+    return collection
 
+# Función para guardar la cita médica en MongoDB
 def save_appointment_to_mongodb(appointment_data, collection):
     try:
-        if not isinstance(appointment_data, dict):
-            raise ValueError("Los datos de la cita deben ser un diccionario")
-        
+        # Verificar que appointment_data ya sea un diccionario
+        if isinstance(appointment_data, str):
+            appointment_data = json.loads(appointment_data)
+
+        # Insertar el documento en la colección de MongoDB
         result = collection.insert_one(appointment_data)
-        return str(result.inserted_id)  # Convertir ObjectId a string
+        
+        # Retornar el ID del documento insertado como string
+        return str(result.inserted_id)
     except Exception as e:
-        print(f"❌ Error al guardar en MongoDB: {e}")
+        print(f"Error al guardar en MongoDB: {e}")
         return None
 
-# Prueba de conexión y almacenamiento
-if __name__ == "__main__":
+# Función principal de escritura de cita médica
+def WriteAppointment(appointment_json):
     uri = "mongodb+srv://mardugo:clave@sampleinformationservic.t2yog.mongodb.net/?retryWrites=true&w=majority&appName=SampleInformationService"
     db_name = "HIS"
     collection_name = "appointments"
     
+    # Conectar a la colección de MongoDB
     collection = connect_to_mongodb(uri, db_name, collection_name)
     
-    if collection:
-        appointment_data = {
-            "resourceType": "Appointment",
-            "status": "booked",
-            "description": "Consulta médica general",
-            "start": "2025-04-10T10:00:00Z",
-            "end": "2025-04-10T10:30:00Z",
-            "participant": [
-                {
-                    "actor": {
-                        "reference": "Patient/1020713756",
-                        "display": "Mario Enrique Duarte"
-                    },
-                    "status": "accepted"
-                },
-                {
-                    "actor": {
-                        "reference": "Practitioner/12345",
-                        "display": "Dr. Juan Pérez"
-                    },
-                    "status": "accepted"
-                }
-            ]
-        }
-        
-        inserted_id = save_appointment_to_mongodb(appointment_data, collection)
-        
-        if inserted_id:
-            print(f"✅ Cita médica guardada con ID: {inserted_id}")
-        else:
-            print("❌ No se pudo guardar la cita médica.")
+    # Guardar la cita en MongoDB
+    inserted_id = save_appointment_to_mongodb(appointment_json, collection)
+    
+    if inserted_id:
+        return "success", inserted_id
+    else:
+        return "error", None
+
