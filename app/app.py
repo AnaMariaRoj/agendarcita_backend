@@ -37,10 +37,13 @@ async def get_appointment_by_identifier(system: str, value: str):
 async def add_appointment(request: Request):
     new_appointment_dict = dict(await request.json())
     status, appointment_id = WriteAppointment(new_appointment_dict)
+
     if status == 'success':
         return {"_id": appointment_id}  # Devolver el ID de la cita médica
+    elif "errorValidating" in status:
+        raise HTTPException(status_code=422, detail=f"Validation Error: {status}")
     else:
-        raise HTTPException(status_code=500, detail=f"Validating error: {status}")
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {status}")
 
 if __name__ == '__main__':
     uvicorn.run(app, host="0.0.0.0", port=8000)
